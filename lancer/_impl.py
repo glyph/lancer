@@ -43,7 +43,6 @@ def maybe_key(pem_path):
 
 
 def main(reactor):
-    globalLogBeginner.beginLoggingTo([textFileLogObserver(sys.stdout)])
     acme_path = FilePath(sys.argv[1]).asTextMode()
     myconfig = acme_path.child("lancer.json")
     if myconfig.exists():
@@ -55,12 +54,13 @@ def main(reactor):
         driver_name = six.moves.input("driver ('rackspace' or 'cloudflare')? ")
         user_name = six.moves.input("user? ")
         zone_name = six.moves.input("zone? ")
-        cfg.setContent(json.dumps({
+        myconfig.setContent(json.dumps({
             "driver_name": driver_name,
             "user_name": user_name,
             "zone_name": zone_name,
         }).encode("utf-8"))
 
+    globalLogBeginner.beginLoggingTo([textFileLogObserver(sys.stdout)])
     def action(secret):
         password = secret
         responders = [
