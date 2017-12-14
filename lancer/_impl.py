@@ -17,7 +17,7 @@ from acme.jose import JWKRSA, RS256
 from txacme.service import AcmeIssuingService
 from txacme.store import DirectoryStore
 from txacme.client import Client
-from txacme.urls import LETSENCRYPT_DIRECTORY
+from txacme.urls import LETSENCRYPT_DIRECTORY, LETSENCRYPT_STAGING_DIRECTORY
 from txacme.util import generate_private_key
 from txacme.challenges import LibcloudDNSResponder
 
@@ -50,14 +50,17 @@ def main(reactor):
         driver_name = cfg['driver_name']
         zone_name = cfg['zone_name']
         user_name = cfg['user_name']
+        staging = cfg.get('staging', False)
     else:
         driver_name = six.moves.input("driver ('rackspace' or 'cloudflare')? ")
         user_name = six.moves.input("user? ")
         zone_name = six.moves.input("zone? ")
+        staging = False
         myconfig.setContent(json.dumps({
             "driver_name": driver_name,
             "user_name": user_name,
             "zone_name": zone_name,
+            "staging": staging
         }).encode("utf-8"))
 
     globalLogBeginner.beginLoggingTo([textFileLogObserver(sys.stdout)])
@@ -69,8 +72,12 @@ def main(reactor):
         ]
         acme_key = maybe_key(acme_path)
         cert_store = DirectoryStore(acme_path)
+        if staging:
+            le_url = LETSENCRYPT_STAGING_DIRECTORY
+        else:
+            le_url = LETSENCRYPT_DIRECTORY
         client_creator = partial(Client.from_url, reactor=reactor,
-                                 url=LETSENCRYPT_DIRECTORY,
+                                 url=le_url,
                                  key=acme_key, alg=RS256)
         clock = reactor
         service = AcmeIssuingService(cert_store, client_creator, clock,
