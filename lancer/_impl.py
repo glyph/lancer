@@ -1,5 +1,5 @@
 
-import sys, os, json, six
+import sys, json, six
 
 from secretly import secretly
 from functools import partial
