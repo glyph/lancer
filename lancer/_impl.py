@@ -21,6 +21,8 @@ from txacme.urls import LETSENCRYPT_DIRECTORY, LETSENCRYPT_STAGING_DIRECTORY
 from txacme.util import generate_private_key
 from txacme.challenges import LibcloudDNSResponder
 
+from ._gandi import GandiV5Responder
+
 def maybe_key(pem_path):
     acme_key_file = pem_path.child(u'client.key')
     if acme_key_file.exists():
@@ -66,10 +68,15 @@ def main(reactor):
     globalLogBeginner.beginLoggingTo([textFileLogObserver(sys.stdout)])
     def action(secret):
         password = secret
-        responders = [
-            LibcloudDNSResponder.create(reactor, driver_name,
-                                        user_name, password, zone_name)
-        ]
+        if driver_name == 'gandi':
+            responders = [
+                GandiV5Responder(api_key=password, zone_name=zone_name)
+            ]
+        else:
+            responders = [
+                LibcloudDNSResponder.create(reactor, driver_name,
+                                            user_name, password, zone_name)
+            ]
         acme_key = maybe_key(acme_path)
         cert_store = DirectoryStore(acme_path)
         if staging:
