@@ -12,7 +12,8 @@ from twisted.logger import globalLogBeginner, textFileLogObserver
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 
-from acme.jose import JWKRSA, RS256
+from josepy.jwk import JWKRSA
+from josepy.jwa import RS256
 
 from txacme.service import AcmeIssuingService
 from txacme.store import DirectoryStore
