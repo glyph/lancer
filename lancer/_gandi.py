@@ -53,6 +53,7 @@ class GandiV5Responder(object):
         yield deferLater(reactor, self._settle_delay, lambda: None)
         print("start settled")
 
+    @inlineCallbacks
     def stop_responding(self, server_name, challenge, response):
         from twisted.internet import reactor
         full_name = challenge.validation_domain_name(server_name)
