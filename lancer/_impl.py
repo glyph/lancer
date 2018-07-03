@@ -22,6 +22,7 @@ from txacme.urls import LETSENCRYPT_DIRECTORY, LETSENCRYPT_STAGING_DIRECTORY
 from txacme.util import generate_private_key
 from txacme.challenges import LibcloudDNSResponder
 
+from ._cloudflare import CloudflareV4Responder
 from ._gandi import GandiV5Responder
 
 def maybe_key(pem_path):
@@ -72,6 +73,11 @@ def main(reactor):
         if driver_name == 'gandi':
             responders = [
                 GandiV5Responder(api_key=password, zone_name=zone_name)
+            ]
+        elif driver_name == 'cloudflare':
+            responders = [
+                CloudflareV4Responder(email=user_name, api_key=password,
+                                      zone_name=zone_name)
             ]
         else:
             responders = [
