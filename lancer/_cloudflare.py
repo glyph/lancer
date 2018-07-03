@@ -44,29 +44,36 @@ class CloudflareV4Responder(object):
         validation = _validation(response)
         full_name = challenge.validation_domain_name(server_name)
         # subdomain = _split_zone(full_name, self._zone_name)
-        response = yield treq.get(str(base.child("zones").set(name=self._zone_name)))
+        zones_list_url = str(base.child("zones").set("name", self._zone_name))
+
+        response = yield treq.get(zones_list_url,
+                                  headers=self._headers())
         data = yield response.json()
-        print("zone-response", data)
+        assert len(data['result']) == 1
         zone_id = data['result'][0]['id']
         records_base = base.child("zones").child(zone_id).child("dns_records")
         records_query_url = str(records_base
                                 .set("type", "TXT")
                                 .set("name", full_name))
-        response = yield treq.get(records_query_url)
+        response = yield treq.get(records_query_url, headers=self._headers())
         data = yield response.json()
         records = data['result']
         dns_record = {
             "type": "TXT",
             "ttl": 120,
+            "name": full_name,
             "content": validation
         }
         if records:
-            print("existing record found, doing PUT")
-            yield treq.put(str(records_base.child(records[0]["id"])), json=dns_record)
+            put_to = str(records_base.child(records[0]["id"]))
+            response = yield treq.put(
+                put_to, json=dns_record,
+                headers=self._headers()
+            )
         else:
-            print("no existing record found, doing POST")
-            yield treq.post(str(records_base), json=dns_record)
-        print("settling")
+            post_to = str(records_base)
+            response = yield treq.post(post_to, json=dns_record, headers=self._headers())
+        yield response.json()
         yield deferLater(self._reactor, self._settle_delay, lambda: None)
 
 
