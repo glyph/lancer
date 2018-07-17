@@ -50,7 +50,7 @@ def main(reactor):
     acme_path = FilePath(sys.argv[1]).asTextMode()
     myconfig = acme_path.child("lancer.json")
     if myconfig.exists():
-        cfg = json.loads(myconfig.getContent())
+        cfg = json.loads(myconfig.getContent().decode("utf-8"))
         driver_name = cfg['driver_name']
         zone_name = cfg['zone_name']
         user_name = cfg['user_name']
