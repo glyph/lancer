@@ -16,7 +16,7 @@ class GandiV5Responder(object):
 
     _api_key = attr.ib()
     _zone_name = attr.ib()
-    _settle_delay=attr.ib(default=60.0)
+    _settle_delay = attr.ib(default=60.0)
 
     challenge_type = u'dns-01'
 
@@ -67,6 +67,6 @@ class GandiV5Responder(object):
         if subdomain == '':
             subdomain = '@'
         response = yield treq.delete(url, headers=self._headers())
-        print((yield treq.json_content(response)))
+        print((yield treq.text(response)))
         yield deferLater(reactor, self._settle_delay, lambda: None)
         print("stop settled")
