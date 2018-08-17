@@ -14,10 +14,13 @@ that comes with it if you want to be able to talk to it.
 
 For example:
 
-1. Maybe you have an [OpenWRT](https://www.openwrt.org/) router and you need to
-   administer its web interface; you don't want to get your DNS hijacked and
-   find that it needs.
-2. Maybe you need to test some web APIs that [don't work](https://sites.google.com/a/chromium.org/dev/Home/chromium-security/deprecating-powerful-features-on-insecure-origins) without HTTPS, so you need a development certificate for localhost.
+1. Maybe you need to test some web APIs that [don't
+   work](https://sites.google.com/a/chromium.org/dev/Home/chromium-security/deprecating-powerful-features-on-insecure-origins)
+   without HTTPS, so you need a development certificate for localhost.
+2. Maybe you have an [OpenWRT](https://www.openwrt.org/) router and you need to
+   administer it via its web interface; you don't want every compromised IoT
+   device or bored teenager on your WiFi to be able to read your administrator
+   password.
 
 ## The Bad Old Days
 
