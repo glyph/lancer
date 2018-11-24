@@ -67,6 +67,6 @@ class GandiV5Responder(object):
         if subdomain == '':
             subdomain = '@'
         response = yield treq.delete(url, headers=self._headers())
-        print((yield treq.text(response)))
+        print((yield response.text()))
         yield deferLater(reactor, self._settle_delay, lambda: None)
         print("stop settled")
