@@ -96,9 +96,7 @@ def main(reactor):
         clock = reactor
         service = AcmeIssuingService(cert_store, client_creator, clock,
                                      responders)
-        service.startService()
-        forever = Deferred()
-        return forever
+        return service._check_certs()
     return secretly(reactor, action=action,
                            system='libcloud/' + driver_name,
                            username=user_name)
