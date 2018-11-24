@@ -96,6 +96,7 @@ def main(reactor):
         clock = reactor
         service = AcmeIssuingService(cert_store, client_creator, clock,
                                      responders)
+        service._registered = False
         return service._check_certs()
     return secretly(reactor, action=action,
                            system='libcloud/' + driver_name,
