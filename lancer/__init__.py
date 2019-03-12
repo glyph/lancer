@@ -2,4 +2,4 @@
 Provision TLS *Cer*tificates for your *LAN*, using the ACME DNS challenge.
 """
 
-__version__ = '0.3.2'
+__version__ = '0.4.0'
