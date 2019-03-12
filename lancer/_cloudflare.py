@@ -9,6 +9,8 @@ from twisted.internet.task import deferLater
 
 from hyperlink import parse
 
+from ._common import ConsistencyChecker
+
 base = parse("https://api.cloudflare.com/client/v4/")
 
 def global_reactor():
@@ -24,7 +26,6 @@ class CloudflareV4Responder(object):
     _email = attr.ib()
     _api_key = attr.ib()
     _zone_name = attr.ib()
-    _settle_delay = attr.ib(default=60.0)
     _reactor = attr.ib(default=attr.Factory(global_reactor))
 
     challenge_type = u'dns-01'
@@ -74,10 +75,10 @@ class CloudflareV4Responder(object):
             post_to = str(records_base)
             response = yield treq.post(post_to, json=dns_record, headers=self._headers())
         yield response.json()
-        yield deferLater(self._reactor, self._settle_delay, lambda: None)
+        yield ConsistencyChecker.default(self._reactor).check(full_name, validation)
 
 
     @inlineCallbacks
     def stop_responding(self, server_name, challenge, response):
         # Ignore stop_responding right now.
-        yield deferLater(self._reactor, self._settle_delay, lambda: None)
+        yield deferLater(self._reactor, 1.0, lambda: None)
