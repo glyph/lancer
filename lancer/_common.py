@@ -69,6 +69,7 @@ class ConsistencyChecker(object):
                     name=name,
                     content=content,
                 )
+                yield deferLater(self._reactor, INTERQUERY_DELAY, lambda: None)
                 returnValue(True)
             else:
                 log.warn(
