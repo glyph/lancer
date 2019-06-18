@@ -4,9 +4,10 @@ import sys, json, six
 from secretly import secretly
 from functools import partial
 
-from twisted.internet.defer import Deferred
+from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import react
 from twisted.python.filepath import FilePath
+from twisted.python.components import proxyForInterface
 from twisted.logger import globalLogBeginner, textFileLogObserver
 
 from cryptography.hazmat.primitives import serialization
@@ -18,12 +19,15 @@ from josepy.jwa import RS256
 from txacme.service import AcmeIssuingService
 from txacme.store import DirectoryStore
 from txacme.client import Client
+from txacme.challenges._libcloud import _validation
+from txacme.interfaces import IResponder
 from txacme.urls import LETSENCRYPT_DIRECTORY, LETSENCRYPT_STAGING_DIRECTORY
 from txacme.util import generate_private_key
 from txacme.challenges import LibcloudDNSResponder
 
 from ._cloudflare import CloudflareV4Responder
 from ._gandi import GandiV5Responder
+from ._common import ConsistencyChecker
 
 def maybe_key(pem_path):
     acme_key_file = pem_path.child(u'client.key')
@@ -44,6 +48,23 @@ def maybe_key(pem_path):
         )
     acme_key = JWKRSA(key=key)
     return acme_key
+
+
+
+class WaitingResponder(proxyForInterface(IResponder, "_original")):
+
+    def __init__(self, original, reactor):
+        self._original = original
+        self._reactor = reactor
+
+
+    @inlineCallbacks
+    def start_responding(self, server_name, challenge, response):
+        validation = _validation(response)
+        domain_name = challenge.validation_domain_name(server_name)
+        yield super(WaitingResponder, self).start_responding(server_name, challenge, response)
+        yield ConsistencyChecker.default(self._reactor).check(domain_name, validation)
+
 
 
 def main(reactor):
@@ -72,7 +93,10 @@ def main(reactor):
         password = secret
         if driver_name == 'gandi':
             responders = [
-                GandiV5Responder(api_key=password, zone_name=zone_name)
+                WaitingResponder(
+                    GandiV5Responder(api_key=password, zone_name=zone_name),
+                    reactor
+                )
             ]
         elif driver_name == 'cloudflare':
             responders = [
@@ -81,8 +105,12 @@ def main(reactor):
             ]
         else:
             responders = [
-                LibcloudDNSResponder.create(reactor, driver_name,
-                                            user_name, password, zone_name)
+                WaitingResponder(
+                    LibcloudDNSResponder.create(
+                        reactor, driver_name, user_name, password, zone_name
+                    ),
+                    reactor
+                )
             ]
         acme_key = maybe_key(acme_path)
         cert_store = DirectoryStore(acme_path)
