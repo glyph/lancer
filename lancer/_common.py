@@ -58,7 +58,7 @@ class ConsistencyChecker(object):
                 [
                     resolver.lookupText(name).addCallbacks(
                         lambda response: response[0][0].payload.data[0].decode("ascii"),
-                        lambda failure: "<nothing>",
+                        lambda failure, resolver=resolver: f"<nothing {resolver} {failure}>",
                     )
                     for resolver in self._resolvers
                 ]
@@ -72,9 +72,11 @@ class ConsistencyChecker(object):
                 yield deferLater(self._reactor, INTERQUERY_DELAY, lambda: None)
                 returnValue(True)
             else:
+                dissenting = [each for each in gathered if each != content]
+                print(f"dissenters for {name}", dissenting)
                 log.warn(
                     "expected {content} for {name}: dissenting responses {dissenting}",
-                    dissenting=[each for each in gathered if each != content],
+                    dissenting=dissenting,
                     content=content,
                     name=name,
                 )
