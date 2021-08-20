@@ -1,3 +1,65 @@
+# This Project is Now Closed
+
+I wrote `lancer` at a time when:
+
+1. `txacme` was still actively maintained,
+2. it [worked with the production version of Let's
+   Encrypt](https://github.com/twisted/txacme/issues/151), and
+2. using certbot for offline challenges involved hand-manipulating DNS records
+   and was really difficult.
+
+Today, none of these things are true any longer.  If you want to provision
+certificates for your offline computers, you can use DNS plugins, like [this
+one for Gandi](https://github.com/obynio/certbot-plugin-gandi), [this one for
+Rackspace](https://github.com/komputerwiz/certbot-dns-rackspace), or [this one
+for route53](https://certbot-dns-route53.readthedocs.io/en/stable/).  Getting a
+local certificate like the ones `lancer` used to issue is as simple as:
+
+```bash
+# make a gandi.ini with your credentials
+
+mkdir -p ~/.certbot/config/live
+mkdir -p ~/.certbot/config/config
+mkdir -p ~/.certbot/config/work
+mkdir -p ~/.certbot/config/logs
+
+certbot \
+    --config-dir ~/.certbot/config/ \
+    --work-dir ~/.certbot/work/ \
+    --logs-dir ~/.certbot/logs/ \
+    certonly \
+    --domain "${GANDI_HOST}" \
+    --authenticator dns-gandi \
+    --dns-gandi-credentials ~/Secrets/Gandi/gandi.ini \
+    ;
+```
+
+Massaging this to work with `txsni` then involves just glomming the `pem` files
+together (at least until [`txsni` just does this
+directly](https://github.com/glyph/txsni/issues/31)), like so:
+
+```bash
+cd ~/.certbot/config/live || exit 1;
+
+mkdir ~/.txsni/
+
+for each in *; do
+    if [ -d "${each}" ]; then
+        (
+            cat "${each}/privkey.pem";
+            cat "${each}/fullchain.pem";
+        ) > ~/.txsni/"${each}".pem;
+    fi;
+done;
+
+twist web --listen="txsni:$HOME/.txsni:tcp:8443" --path .
+```
+
+Since this project hasn't worked for quite some time, I will archive it; the
+original README is left for posterity below.
+
+------
+
 # LAN-Cer: Certificates For Your LAN
 
 `lancer` is a tool which will quickly and simply provision certificates for any
